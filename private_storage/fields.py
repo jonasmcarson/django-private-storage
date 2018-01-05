@@ -14,9 +14,7 @@ from .storage import private_storage
 
 logger = logging.getLogger(__name__)
 
-
-
-class PrivateFileField(models.FileField):
+class PrivateFileFieldMixin(object):
     """
     Filefield with private storage, custom filename and size checks.
 
@@ -38,10 +36,10 @@ class PrivateFileField(models.FileField):
         kwargs.setdefault('storage', private_storage)
         if self._upload and django.VERSION < (1,7):
             kwargs.setdefault('upload_to', 'uploads')  # shut up warnings from Django 1.6- model validation
-        super(PrivateFileField, self).__init__(*args, **kwargs)
+        super(PrivateFileFieldMixin, self).__init__(*args, **kwargs)
 
     def clean(self, *args, **kwargs):
-        data = super(PrivateFileField, self).clean(*args, **kwargs)
+        data = super(PrivateFileFieldMixin, self).clean(*args, **kwargs)
         file = data.file
         if isinstance(file, UploadedFile):
             # content_type is only available for uploaded files,
@@ -71,3 +69,11 @@ class PrivateFileField(models.FileField):
             subdirs = [self.get_directory_name()]
         dirs = list(subdirs) + [self.get_filename(filename)]
         return os.path.normpath(os.path.join(*dirs))
+
+class PrivateImageField(PrivateFileFieldMixin, models.ImageField):
+    pass
+
+class PrivateFileField(PrivateFileFieldMixin, models.FileField):
+    pass
+
+
